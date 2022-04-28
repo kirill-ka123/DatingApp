@@ -5,6 +5,9 @@
     <string name="sign_in">Войти</string>
     <string name="sign_up">Регистарция</string>
     <string name="sign_up_btn">Зарегистрироваться</string>
+    <string name="sign_out_btn">Выйти</string>
     <string name="your_name">Твое имя</string>
     <string name="re_type_password">Повтор пароля</string>
+    <string name="name_txt_view">Имя: %1$s</string>
+    <string name="email_txt_view">Email: %1$s</string>
 </resources>

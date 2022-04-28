@@ -8,12 +8,15 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.datingapp.R
+import com.example.datingapp.ui.AuthViewModel
+import com.example.datingapp.ui.MainActivity
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.map_fragment.*
 
 class MapFragment : Fragment(R.layout.map_fragment) {
     val args: MapFragmentArgs by navArgs()
     private lateinit var mAuth: FirebaseAuth
+    private lateinit var authViewModel: AuthViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val callback: OnBackPressedCallback =
@@ -31,14 +34,16 @@ class MapFragment : Fragment(R.layout.map_fragment) {
         super.onViewCreated(view, savedInstanceState)
 
         mAuth = FirebaseAuth.getInstance()
+        authViewModel = (activity as MainActivity).authViewModel
 
         val user = args.user
 
-        textView.text = user.displayName
-        textView2.text = user.email
+        name.text = getString(R.string.name_txt_view, user.displayName)
+        email.text = getString(R.string.email_txt_view, user.email)
 
-        button2.setOnClickListener {
+        btn_sign_out.setOnClickListener {
             mAuth.signOut()
+            authViewModel.setUser(null)
             findNavController().navigate(R.id.action_mapFragment_to_loginFragment)
         }
     }
