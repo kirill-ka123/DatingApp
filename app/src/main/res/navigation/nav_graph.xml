@@ -21,7 +21,7 @@
         android:label="MapFragment" >
         <argument
             android:name="user"
-            app:argType="com.example.datingapp.models.User" />
+            app:argType="com.example.datingapp.models.UserProfile" />
         <action
             android:id="@+id/action_mapFragment_to_loginFragment"
             app:destination="@id/loginFragment"
