@@ -1,26 +1,22 @@
 package com.example.datingapp
 
 import android.app.Application
-import com.example.datingapp.data.repositories.UserRepositoryImpl
-import com.example.datingapp.domain.useCases.GetUserFromDbUseCase
-import com.example.datingapp.domain.useCases.SignInUseCase
-import com.example.datingapp.domain.useCases.SignUpUseCase
-import com.example.datingapp.domain.useCases.SaveUserInDbUseCase
-import com.example.datingapp.presentation.di.ServiceLocator
+import com.example.datingapp.presentation.di.appModule
+import com.example.datingapp.presentation.di.dataModule
+import com.example.datingapp.presentation.di.domainModule
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.core.context.startKoin
+import org.koin.core.logger.Level
 
 class DatingApplication : Application() {
-    private val userRepository: UserRepositoryImpl
-        get() = ServiceLocator.provideUserRepository()
+    override fun onCreate() {
+        super.onCreate()
 
-    val readUserFromDbUseCase: GetUserFromDbUseCase
-        get() = GetUserFromDbUseCase(userRepository)
-
-    val writeUserInDbUseCase: SaveUserInDbUseCase
-        get() = SaveUserInDbUseCase(userRepository)
-
-    val signInUseCase: SignInUseCase
-        get() = SignInUseCase(userRepository)
-
-    val signUpUseCase: SignUpUseCase
-        get() = SignUpUseCase(userRepository)
+        startKoin {
+            androidLogger(Level.DEBUG)
+            androidContext(this@DatingApplication)
+            modules(listOf(appModule, dataModule, domainModule))
+        }
+    }
 }
