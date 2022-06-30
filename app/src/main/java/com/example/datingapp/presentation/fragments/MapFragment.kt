@@ -1,4 +1,4 @@
-package com.example.datingapp.fragments
+package com.example.datingapp.presentation.fragments
 
 import android.os.Bundle
 import android.util.Log
@@ -8,14 +8,14 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.datingapp.R
-import com.example.datingapp.ui.MainActivity
-import com.example.datingapp.ui.UserViewModel
-import com.example.datingapp.util.ResourceAuth
+import com.example.datingapp.presentation.MainActivity
+import com.example.datingapp.presentation.viewModel.UserViewModel
+import com.example.datingapp.common.ResourceAuth
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.map_fragment.*
 
 class MapFragment : Fragment(R.layout.map_fragment) {
-    val args: MapFragmentArgs by navArgs()
+    private val args: MapFragmentArgs by navArgs()
     private lateinit var auth: FirebaseAuth
     private lateinit var userViewModel: UserViewModel
 

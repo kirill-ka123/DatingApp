@@ -1,4 +1,4 @@
-package com.example.datingapp.fragments
+package com.example.datingapp.presentation.fragments
 
 import android.os.Bundle
 import android.util.Patterns
@@ -9,13 +9,17 @@ import androidx.lifecycle.Observer
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import com.example.datingapp.R
-import com.example.datingapp.ui.MainActivity
-import com.example.datingapp.ui.UserViewModel
-import com.example.datingapp.util.ResourceAuth
-import kotlinx.android.synthetic.main.register_fragment.*
+import com.example.datingapp.presentation.MainActivity
+import com.example.datingapp.presentation.viewModel.UserViewModel
+import com.example.datingapp.common.ResourceAuth
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
+import kotlinx.android.synthetic.main.login_fragment.*
 
-class RegisterFragment : Fragment(R.layout.register_fragment) {
+class LoginFragment : Fragment(R.layout.login_fragment) {
     private lateinit var userViewModel: UserViewModel
+    
     private lateinit var navController: NavController
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -24,15 +28,11 @@ class RegisterFragment : Fragment(R.layout.register_fragment) {
         userViewModel = (activity as MainActivity).userViewModel
         navController = findNavController()
 
-        btn_register.setOnClickListener {
-            val name = et_name.text.toString()
+        btn_sign_in.setOnClickListener {
             val email = et_email.text.toString()
             val password = et_password.text.toString()
-            val rePassword = et_re_password.text.toString()
-            if (Patterns.EMAIL_ADDRESS.matcher(email).matches() && password.isNotBlank() && password == rePassword) {
-                userViewModel.signUp(email, password, name)
-            } else if (password != rePassword) {
-                Toast.makeText(requireContext(), "Пароли не совпадают", Toast.LENGTH_SHORT).show()
+            if (Patterns.EMAIL_ADDRESS.matcher(email).matches() && password.isNotBlank()) {
+                userViewModel.signIn(email, password)
             } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 Toast.makeText(requireContext(), "Некорректный email", Toast.LENGTH_SHORT).show()
             } else if (password.isBlank()) {
@@ -40,35 +40,39 @@ class RegisterFragment : Fragment(R.layout.register_fragment) {
             }
         }
 
+        btn_sign_up.setOnClickListener {
+            navController.navigate(R.id.action_loginFragment_to_registerFragment)
+        }
+
         userViewModel.userProfile.observe(viewLifecycleOwner, Observer { user ->
-            when(user) {
+            when (user) {
                 is ResourceAuth.Success -> {
-                    pb_sign_up.visibility = View.INVISIBLE
+                    pb_sign_in.visibility = View.INVISIBLE
 
                     val bundle = Bundle().apply {
-//                        if (user.data != null) {
-//                            putSerializable("user", User(user.data))
-//                        } else {
-//                            putSerializable("user", User("null", "null"))
-//                        }
                         putSerializable("user", user.data)
                     }
-                    navController.navigate(R.id.action_registerFragment_to_mapFragment, bundle)
+                    navController.navigate(R.id.action_loginFragment_to_mapFragment, bundle)
                 }
                 is ResourceAuth.Error -> {
-                    pb_sign_up.visibility = View.INVISIBLE
+                    pb_sign_in.visibility = View.INVISIBLE
 
                     Toast.makeText(requireContext(), user.message, Toast.LENGTH_SHORT).show()
                 }
                 is ResourceAuth.Loading -> {
-                    pb_sign_up.visibility = View.VISIBLE
+                    pb_sign_in.visibility = View.VISIBLE
                 }
                 is ResourceAuth.Null -> {
-                    pb_sign_up.visibility = View.INVISIBLE
+                    pb_sign_in.visibility = View.INVISIBLE
 
-                    Toast.makeText(requireContext(), "user is nullable", Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(requireContext(), "user is nullable", Toast.LENGTH_SHORT).show()
                 }
             }
         })
+    }
+
+    override fun onStart() {
+        super.onStart()
+        userViewModel.setUser()
     }
 }

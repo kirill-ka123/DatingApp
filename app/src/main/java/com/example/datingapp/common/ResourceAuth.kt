@@ -1,4 +1,4 @@
-package com.example.datingapp.util
+package com.example.datingapp.common
 
 sealed class ResourceAuth<T>(
     val data: T? = null,
