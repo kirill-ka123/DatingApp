@@ -45,7 +45,7 @@ class MapFragment : Fragment(R.layout.map_fragment) {
         btn_sign_out.setOnClickListener {
             auth.signOut()
             userViewModel.setUser(null)
-            userViewModel.setUserProfile(ResourceAuth.Null())
+            userViewModel.setUserProfile(null)
             findNavController().navigate(R.id.action_mapFragment_to_loginFragment)
         }
     }

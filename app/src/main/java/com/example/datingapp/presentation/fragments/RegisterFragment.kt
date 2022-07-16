@@ -5,13 +5,11 @@ import android.util.Patterns
 import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import com.example.datingapp.R
 import com.example.datingapp.presentation.MainActivity
 import com.example.datingapp.presentation.viewModel.UserViewModel
-import com.example.datingapp.common.ResourceAuth
 import kotlinx.android.synthetic.main.register_fragment.*
 
 class RegisterFragment : Fragment(R.layout.register_fragment) {
@@ -43,31 +41,9 @@ class RegisterFragment : Fragment(R.layout.register_fragment) {
             }
         }
 
-        userViewModel.userProfile.observe(viewLifecycleOwner, Observer { user ->
-            when (user) {
-                is ResourceAuth.Success -> {
-                    pb_sign_up.visibility = View.INVISIBLE
-
-                    val bundle = Bundle().apply {
-                        putSerializable("user", user.data)
-                    }
-                    navController.navigate(R.id.action_registerFragment_to_mapFragment, bundle)
-                }
-                is ResourceAuth.Error -> {
-                    pb_sign_up.visibility = View.INVISIBLE
-
-                    Toast.makeText(requireContext(), user.message, Toast.LENGTH_SHORT).show()
-                }
-                is ResourceAuth.Loading -> {
-                    pb_sign_up.visibility = View.VISIBLE
-                }
-                is ResourceAuth.Null -> {
-                    pb_sign_up.visibility = View.INVISIBLE
-
-                    //Toast.makeText(requireContext(), "user is nullable", Toast.LENGTH_SHORT).show()
-                }
-            }
-        })
+        userViewModel.loginUi.observe(viewLifecycleOwner) { loginUi ->
+            loginUi.apply(pb_sign_up, navController, requireContext(), this)
+        }
     }
 
 //    public class PasswordValidator {   private static final String PASSWORD_PATTERN =   "((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%]).{6,20})"; private final Pattern pattern; private Matcher matcher; public PasswordValidator()

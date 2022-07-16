@@ -6,7 +6,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.example.datingapp.domain.models.UserProfile
-import com.example.datingapp.common.ResourceAuth
 import com.example.datingapp.domain.callbacks.GetUserCallback
 import com.example.datingapp.domain.callbacks.SaveUserCallback
 import com.example.datingapp.domain.callbacks.SignInCallback
@@ -29,9 +28,9 @@ class UserViewModel(
 ) : AndroidViewModel(app) {
 
     private var user: FirebaseUser? = null
-    private val _userProfile = MutableLiveData<ResourceAuth<UserProfile>>()
-    val userProfile: LiveData<ResourceAuth<UserProfile>> =
-        _userProfile // Полный профиль текущего пользователя, который сохраняется в БД
+
+    private val _loginUi = MutableLiveData<LoginUi>()
+    val loginUi: LiveData<LoginUi> = _loginUi
 
     private val auth = FirebaseAuth.getInstance()
 
@@ -43,21 +42,7 @@ class UserViewModel(
         if (user == null && auth.currentUser != null) {
             user = auth.currentUser
 
-            _userProfile.value = ResourceAuth.Loading()
-            getUserFromDbUseCase(user!!.uid, object : GetUserCallback {
-                override fun onSuccess(userProfile: UserProfile) {
-                    Log.i("firebase database", "Got value $userProfile")
-
-                    _userProfile.value = ResourceAuth.Success(userProfile)
-                }
-
-                override fun onFailure(error: Exception) {
-                    Log.e("firebase database", "Error getting data", error)
-
-                    val userProfile = ResourceAuth.Error<UserProfile>(error.message)
-                    _userProfile.value = userProfile
-                }
-            })
+            getUserFromDbUseCase(user!!.uid, provideGetUserCallback())
         }
     }
 
@@ -65,90 +50,118 @@ class UserViewModel(
         this.user = user
     }
 
-    fun setUserProfile(userProfile: ResourceAuth<UserProfile>) {
-        _userProfile.value = userProfile
+    fun setUserProfile(userProfile: UserProfile?) {
+        if (userProfile != null) {
+            _loginUi.value = LoginUi.SuccessLoginUi(userProfile)
+        } else _loginUi.value = LoginUi.NullLoginUi()
     }
 
     fun signIn(email: String, password: String) {
-        _userProfile.value = ResourceAuth.Loading()
 
         val userEmailAndPassword = UserEmailAndPassword(email, password)
-        signInUseCase(userEmailAndPassword, object : SignInCallback {
-            override fun onSuccess() {
-                Log.d("authentication", "signInWithEmail:success")
-
-                if (auth.currentUser != null) {
-                    user = auth.currentUser!!
-
-                    // получение профиля пользователя из БД
-                    getUserFromDbUseCase(auth.currentUser!!.uid, object : GetUserCallback {
-                        override fun onSuccess(userProfile: UserProfile) {
-                            Log.i("firebase database", "Got value $userProfile")
-
-                            _userProfile.value = ResourceAuth.Success(userProfile)
-                        }
-
-                        override fun onFailure(error: Exception) {
-                            Log.e("firebase database", "Error getting data", error)
-
-                            val userProfile = ResourceAuth.Error<UserProfile>(error.message)
-                            _userProfile.value = userProfile
-                        }
-
-                    })
-                } else {
-                    val userProfile = ResourceAuth.Error<UserProfile>("user is nullable")
-                    _userProfile.value = userProfile
-                }
-            }
-
-            override fun onFailure(error: Exception?) {
-                Log.w("authentication", "signInWithEmail:failure", error)
-                val userProfile = ResourceAuth.Error<UserProfile>(error?.message)
-                _userProfile.value = userProfile
-            }
-        })
+        signInUseCase(userEmailAndPassword, provideSignInCallback())
     }
 
     fun signUp(email: String, password: String, name: String) {
-        _userProfile.value = ResourceAuth.Loading()
 
         val userEmailAndPassword = UserEmailAndPassword(email, password)
-        signUpUseCase(userEmailAndPassword, object : SignUpCallback {
-            override fun onSuccess() {
-                Log.d("authentication", "createUserWithEmail:success")
-                if (auth.currentUser != null) {
-                    user = auth.currentUser!!
+        signUpUseCase(userEmailAndPassword, provideSignUpCallback(email, name))
+    }
 
-                    val userProfileValue = UserProfile(auth.currentUser!!.uid, name, email)
-                    val userProfile = ResourceAuth.Success(userProfileValue)
+    private fun provideSignInCallback() = object : SignInCallback {
+        override fun onStartSignIn() {
+            Log.i("firebase authentication", "signInWithEmail:start")
 
-                    // записываем профиль нового пользователя в БД
-                    saveUserInDbUseCase(userProfileValue, object : SaveUserCallback {
-                        override fun onSuccess() {
-                            Log.w("database", "saveUserInDatabase:success")
-                            _userProfile.value = userProfile
-                        }
+            _loginUi.value = LoginUi.LoadingLoginUi()
+        }
 
-                        override fun onFailure(error: Exception?) {
-                            Log.w("database", "saveUserInDatabase:failure", error)
-                            val userProfileError = ResourceAuth.Error<UserProfile>(error?.message)
-                            _userProfile.value = userProfileError
-                        }
+        override fun onSuccessSignIn() {
+            Log.d("firebase authentication", "signInWithEmail:success")
 
-                    })
-                } else {
-                    val userProfile = ResourceAuth.Error<UserProfile>("user is nullable")
-                    _userProfile.value = userProfile
-                }
+            if (auth.currentUser != null) {
+                user = auth.currentUser!!
+
+                // получение профиля пользователя из БД
+                getUserFromDbUseCase(auth.currentUser!!.uid, provideGetUserCallback())
+            } else {
+                _loginUi.value = LoginUi.NullLoginUi()
             }
+        }
 
-            override fun onFailure(error: Exception?) {
-                Log.w("authentication", "createUserWithEmail:failure", error)
-                val userProfile = ResourceAuth.Error<UserProfile>(error?.message)
-                _userProfile.value = userProfile
+        override fun onFailureSignIn(error: Exception?) {
+            Log.w("firebase authentication", "signInWithEmail:failure", error)
+
+            _loginUi.value = LoginUi.ErrorLoginUi(error?.message)
+        }
+    }
+
+    private fun provideSignUpCallback(email: String, name: String) = object : SignUpCallback {
+        override fun onStartSignUp() {
+            Log.i("firebase authentication", "createUserWithEmail:start")
+
+            _loginUi.value = LoginUi.LoadingLoginUi()
+        }
+
+        override fun onSuccessSignUp() {
+            Log.d("firebase authentication", "createUserWithEmail:success")
+
+            if (auth.currentUser != null) {
+                user = auth.currentUser!!
+                val userProfile = UserProfile(auth.currentUser!!.uid, name, email)
+                // записываем профиль нового пользователя в БД
+                saveUserInDbUseCase(userProfile, provideSaveUserCallback(userProfile))
+            } else {
+                _loginUi.value = LoginUi.NullLoginUi()
             }
+        }
 
-        })
+        override fun onFailureSignUp(error: Exception?) {
+            Log.w("firebase authentication", "createUserWithEmail:failure", error)
+
+            _loginUi.value = LoginUi.ErrorLoginUi(error?.message)
+        }
+    }
+
+    private fun provideGetUserCallback() = object : GetUserCallback {
+        override fun onStartGetUser() {
+            Log.i("firebase database", "getUserFromDatabase:start")
+
+            _loginUi.value = LoginUi.LoadingLoginUi()
+        }
+
+        override fun onSuccessGetUser(userProfile: UserProfile) {
+            Log.i(
+                "firebase database",
+                "getUserFromDatabase:success, value:${userProfile}"
+            )
+
+            _loginUi.value = LoginUi.SuccessLoginUi(userProfile)
+        }
+
+        override fun onFailureGetUser(error: Exception) {
+            Log.e("firebase database", "getUserFromDatabase:failure", error)
+
+            _loginUi.value = LoginUi.ErrorLoginUi(error.message)
+        }
+    }
+
+    private fun provideSaveUserCallback(userProfile: UserProfile) = object : SaveUserCallback {
+        override fun onStartSaveUser() {
+            Log.w("firebase database", "saveUserInDatabase:start")
+
+            _loginUi.value = LoginUi.LoadingLoginUi()
+        }
+
+        override fun onSuccessSaveUser() {
+            Log.w("firebase database", "saveUserInDatabase:success")
+
+            _loginUi.value = LoginUi.SuccessLoginUi(userProfile)
+        }
+
+        override fun onFailureSaveUser(error: Exception?) {
+            Log.w("firebase database", "saveUserInDatabase:failure", error)
+
+            _loginUi.value = LoginUi.ErrorLoginUi(error?.message)
+        }
     }
 }

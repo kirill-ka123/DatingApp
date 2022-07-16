@@ -10,13 +10,14 @@ class FirebaseUserAuth(private val auth: FirebaseAuth) : UserAuth {
         userEmailAndPasswordData: UserEmailAndPasswordData,
         signInCallback: SignInCallback
     ) {
+        signInCallback.onStartSignIn()
         auth.signInWithEmailAndPassword(
             userEmailAndPasswordData.email,
             userEmailAndPasswordData.password
         ).addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                signInCallback.onSuccess()
-            } else signInCallback.onFailure(task.exception)
+                signInCallback.onSuccessSignIn()
+            } else signInCallback.onFailureSignIn(task.exception)
         }
     }
 
@@ -24,13 +25,14 @@ class FirebaseUserAuth(private val auth: FirebaseAuth) : UserAuth {
         userEmailAndPasswordData: UserEmailAndPasswordData,
         signUpCallback: SignUpCallback
     ) {
+        signUpCallback.onStartSignUp()
         auth.createUserWithEmailAndPassword(
             userEmailAndPasswordData.email,
             userEmailAndPasswordData.password
         ).addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                signUpCallback.onSuccess()
-            } else signUpCallback.onFailure(task.exception)
+                signUpCallback.onSuccessSignUp()
+            } else signUpCallback.onFailureSignUp(task.exception)
         }
     }
 }
