@@ -2,6 +2,8 @@ package com.example.datingapp.presentation.viewModel
 
 import android.app.Application
 import android.util.Log
+import android.util.Patterns
+import android.view.View
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -15,6 +17,8 @@ import com.example.datingapp.domain.useCases.GetUserFromDbUseCase
 import com.example.datingapp.domain.useCases.SignInUseCase
 import com.example.datingapp.domain.useCases.SignUpUseCase
 import com.example.datingapp.domain.useCases.SaveUserInDbUseCase
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import java.lang.Exception
@@ -67,6 +71,113 @@ class UserViewModel(
         val userEmailAndPassword = UserEmailAndPassword(email, password)
         signUpUseCase(userEmailAndPassword, provideSignUpCallback(email, name))
     }
+
+    /**
+     * field must not be empty
+     */
+    fun validateName(etName: TextInputEditText, ltName: TextInputLayout): Boolean {
+        if (etName.text.toString().trim().isEmpty()) {
+            ltName.error = "Поле не может быть пустым"
+            etName.requestFocus()
+            return false
+        } else {
+            ltName.isErrorEnabled = false
+        }
+        return true
+    }
+
+    /**
+     * 1) field must not be empty
+     * 2) text should matches email address format
+     */
+    fun validateEmail(etEmail: TextInputEditText, ltEmail: TextInputLayout): Boolean {
+        if (etEmail.text.toString().trim().isEmpty()) {
+            ltEmail.error = "Поле не может быть пустым"
+            etEmail.requestFocus()
+            return false
+        } else if (!isValidEmail(etEmail.text.toString())) {
+            ltEmail.error = "Некорректный email"
+            etEmail.requestFocus()
+            return false
+        } else {
+            ltEmail.isErrorEnabled = false
+        }
+        return true
+    }
+
+    /**
+     * 1) field must not be empty
+     * 2) password length must not be less than 6
+     * 3) password must contain at least one digit
+     * 4) password must contain at least one upper and one lower case letter
+     * 5) password must contain at least one special character.
+     */
+    fun validatePassword(etPassword: TextInputEditText, ltPassword: TextInputLayout): Boolean {
+        if (etPassword.text.toString().trim().isEmpty()) {
+            ltPassword.error = "Поле не может быть пустым"
+           etPassword.requestFocus()
+            return false
+        } else if (etPassword.text.toString().length < 6 || etPassword.text.toString().length > 30) {
+            ltPassword.error = "Пароль должен содержать от 6 до 30 символов"
+           etPassword.requestFocus()
+            return false
+        } else if (!isStringContainNumber(etPassword.text.toString())) {
+            ltPassword.error = "Пароль должен содержать хотя бы одну цифру"
+           etPassword.requestFocus()
+            return false
+        } else if (!isStringLowerAndUpperCase(etPassword.text.toString())) {
+            ltPassword.error =
+                "Пароль должен содержать прописные и строчные буквы"
+           etPassword.requestFocus()
+            return false
+        } else {
+            ltPassword.isErrorEnabled = false
+        }
+        return true
+    }
+
+    /**
+     * 1) field must not be empty
+     */
+    fun validatePasswordLogin(etPassword: TextInputEditText, ltPassword: TextInputLayout): Boolean {
+        if (etPassword.text.toString().trim().isEmpty()) {
+            ltPassword.error = "Поле не может быть пустым"
+            etPassword.requestFocus()
+            return false
+        } else {
+            ltPassword.isErrorEnabled = false
+        }
+        return true
+    }
+
+    /**
+     * 1) field must not be empty
+     * 2) password and confirm password should be same
+     */
+    fun validateConfirmPassword(etConfirmPassword: TextInputEditText, ltConfirmPassword: TextInputLayout, etPassword: TextInputEditText): Boolean {
+        when {
+            etConfirmPassword.text.toString().trim().isEmpty() -> {
+                ltConfirmPassword.error = "Поле не может быть пустым"
+                etConfirmPassword.requestFocus()
+                return false
+            }
+            etConfirmPassword.text.toString() != etPassword.text.toString() -> {
+                ltConfirmPassword.error = "Пароли не совпадают"
+                etConfirmPassword.requestFocus()
+                return false
+            }
+            else -> {
+                ltConfirmPassword.isErrorEnabled = false
+            }
+        }
+        return true
+    }
+
+    private fun isValidEmail(email: String) = Patterns.EMAIL_ADDRESS.matcher(email).matches()
+
+    private fun isStringContainNumber(str: String) = str.contains(".*\\d.*".toRegex())
+
+    private fun isStringLowerAndUpperCase(str: String) = str.contains("[a-z]".toRegex()) && str.contains("[A-Z]".toRegex())
 
     private fun provideSignInCallback() = object : SignInCallback {
         override fun onStartSignIn() {
@@ -163,5 +274,21 @@ class UserViewModel(
 
             _loginUi.value = LoginUi.ErrorLoginUi(error?.message)
         }
+    }
+}
+
+interface ValidateSignUp {
+
+    fun apply(
+        view: View
+    )
+
+    class ValidateName(): ValidateSignUp {
+        override fun apply(
+            view: View
+        ) {
+
+        }
+
     }
 }

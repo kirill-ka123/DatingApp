@@ -1,6 +1,5 @@
 package com.example.datingapp.presentation.viewModel
 
-import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -15,7 +14,6 @@ interface LoginUi {
     fun apply(
         progressBar: View,
         navController: NavController,
-        context: Context,
         fragment: Fragment
     )
 
@@ -23,7 +21,6 @@ interface LoginUi {
         override fun apply(
             progressBar: View,
             navController: NavController,
-            context: Context,
             fragment: Fragment
         ) {
             progressBar.visibility = View.INVISIBLE
@@ -42,7 +39,6 @@ interface LoginUi {
         override fun apply(
             progressBar: View,
             navController: NavController,
-            context: Context,
             fragment: Fragment
         ) {
             progressBar.visibility = View.VISIBLE
@@ -53,12 +49,11 @@ interface LoginUi {
         override fun apply(
             progressBar: View,
             navController: NavController,
-            context: Context,
             fragment: Fragment
         ) {
             progressBar.visibility = View.INVISIBLE
 
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            Toast.makeText(fragment.requireContext(), message, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -66,7 +61,6 @@ interface LoginUi {
         override fun apply(
             progressBar: View,
             navController: NavController,
-            context: Context,
             fragment: Fragment
         ) {
             progressBar.visibility = View.INVISIBLE

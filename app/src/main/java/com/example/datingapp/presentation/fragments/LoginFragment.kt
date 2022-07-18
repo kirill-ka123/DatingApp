@@ -1,9 +1,9 @@
 package com.example.datingapp.presentation.fragments
 
 import android.os.Bundle
-import android.util.Patterns
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
@@ -22,16 +22,14 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
 
         userViewModel = (activity as MainActivity).userViewModel
         navController = findNavController()
+        setupListeners()
 
         btn_sign_in.setOnClickListener {
             val email = et_email.text.toString()
             val password = et_password.text.toString()
-            if (Patterns.EMAIL_ADDRESS.matcher(email).matches() && password.isNotBlank()) {
+
+            if (isValidate()) {
                 userViewModel.signIn(email, password)
-            } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                Toast.makeText(requireContext(), "Некорректный email", Toast.LENGTH_SHORT).show()
-            } else if (password.isBlank()) {
-                Toast.makeText(requireContext(), "Некорректный пароль", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -40,12 +38,43 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
         }
 
         userViewModel.loginUi.observe(viewLifecycleOwner) { loginUi ->
-            loginUi.apply(pb_sign_in, navController, requireContext(), this)
+            loginUi.apply(pb_sign_in, navController, this)
         }
     }
 
     override fun onStart() {
         super.onStart()
         userViewModel.setUser()
+    }
+
+    private fun isValidate(): Boolean =
+        userViewModel.validateEmail(
+            et_email,
+            lt_email
+        ) && userViewModel.validatePasswordLogin(
+            et_password,
+            lt_password
+        )
+
+
+    private fun setupListeners() {
+        et_email.addTextChangedListener(TextFieldValidation(et_email))
+        et_password.addTextChangedListener(TextFieldValidation(et_password))
+    }
+
+    inner class TextFieldValidation(private val view: View) : TextWatcher {
+        override fun afterTextChanged(s: Editable?) {}
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            // checking ids of each text field and applying functions accordingly.
+            when (view.id) {
+                R.id.et_email -> {
+                    userViewModel.validateEmail(et_email, lt_email)
+                }
+                R.id.et_password -> {
+                    userViewModel.validatePasswordLogin(et_password, lt_password)
+                }
+            }
+        }
     }
 }
