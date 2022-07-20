@@ -5,5 +5,5 @@ import java.lang.Exception
 interface SignUpCallback {
     fun onStartSignUp()
     fun onSuccessSignUp()
-    fun onFailureSignUp(error: Exception?)
+    fun onFailureSignUp(error: Exception)
 }

@@ -13,7 +13,9 @@ import org.koin.dsl.module
 
 val dataModule = module {
     single<UserAuth> {
-        val auth = FirebaseAuth.getInstance()
+        val auth = FirebaseAuth.getInstance().apply {
+            setLanguageCode("ru")
+        }
         FirebaseUserAuth(auth)
     }
 

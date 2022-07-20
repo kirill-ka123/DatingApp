@@ -10,4 +10,8 @@
     <string name="confirm_password">Повтор пароля</string>
     <string name="name_txt_view">Имя: %1$s</string>
     <string name="email_txt_view">Email: %1$s</string>
+    <string name="forgot_password">Забыли пароль?</string>
+    <string name="reset_password_title1">Восстановление пароля</string>
+    <string name="reset_password_title2">Укажите адрес электронной почты вашей учетной записи, для которой вы хотите сбросить пароль</string>
+    <string name="reset_password">Сбросить пароль</string>
 </resources>

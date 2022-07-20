@@ -5,5 +5,5 @@ import java.lang.Exception
 interface SignInCallback {
     fun onStartSignIn()
     fun onSuccessSignIn()
-    fun onFailureSignIn(error: Exception?)
+    fun onFailureSignIn(error: Exception)
 }

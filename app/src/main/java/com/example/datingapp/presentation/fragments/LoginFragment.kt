@@ -22,7 +22,6 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
 
         userViewModel = (activity as MainActivity).userViewModel
         navController = findNavController()
-        setupListeners()
 
         btn_sign_in.setOnClickListener {
             val email = et_email.text.toString()
@@ -31,6 +30,10 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
             if (isValidate()) {
                 userViewModel.signIn(email, password)
             }
+        }
+
+        forgot_password.setOnClickListener {
+            navController.navigate(R.id.action_loginFragment_to_resetPasswordFragment)
         }
 
         btn_sign_up.setOnClickListener {
@@ -45,6 +48,7 @@ class LoginFragment : Fragment(R.layout.login_fragment) {
     override fun onStart() {
         super.onStart()
         userViewModel.setUser()
+        setupListeners()
     }
 
     private fun isValidate(): Boolean =

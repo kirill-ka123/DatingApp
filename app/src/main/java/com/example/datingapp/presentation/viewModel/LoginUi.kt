@@ -17,6 +17,16 @@ interface LoginUi {
         fragment: Fragment
     )
 
+    class LoadingLoginUi : LoginUi {
+        override fun apply(
+            progressBar: View,
+            navController: NavController,
+            fragment: Fragment
+        ) {
+            progressBar.visibility = View.VISIBLE
+        }
+    }
+
     class SuccessLoginUi(private val userProfile: UserProfile) : LoginUi {
         override fun apply(
             progressBar: View,
@@ -35,16 +45,6 @@ interface LoginUi {
         }
     }
 
-    class LoadingLoginUi : LoginUi {
-        override fun apply(
-            progressBar: View,
-            navController: NavController,
-            fragment: Fragment
-        ) {
-            progressBar.visibility = View.VISIBLE
-        }
-    }
-
     class ErrorLoginUi(private val message: String?) : LoginUi {
         override fun apply(
             progressBar: View,
@@ -52,8 +52,6 @@ interface LoginUi {
             fragment: Fragment
         ) {
             progressBar.visibility = View.INVISIBLE
-
-            Toast.makeText(fragment.requireContext(), message, Toast.LENGTH_SHORT).show()
         }
     }
 

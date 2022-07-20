@@ -5,5 +5,5 @@ import java.lang.Exception
 interface SaveUserCallback {
     fun onStartSaveUser()
     fun onSuccessSaveUser()
-    fun onFailureSaveUser(error: Exception?)
+    fun onFailureSaveUser(error: Exception)
 }

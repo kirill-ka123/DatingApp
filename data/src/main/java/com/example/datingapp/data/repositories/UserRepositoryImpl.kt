@@ -3,11 +3,8 @@ package com.example.datingapp.data.repositories
 import com.example.datingapp.data.auth.UserAuth
 import com.example.datingapp.data.database.UserDatabase
 import com.example.datingapp.data.auth.model.UserEmailAndPasswordData
-import com.example.datingapp.domain.callbacks.GetUserCallback
 import com.example.datingapp.data.database.model.UserProfileData
-import com.example.datingapp.domain.callbacks.SaveUserCallback
-import com.example.datingapp.domain.callbacks.SignInCallback
-import com.example.datingapp.domain.callbacks.SignUpCallback
+import com.example.datingapp.domain.callbacks.*
 import com.example.datingapp.domain.models.UserEmailAndPassword
 import com.example.datingapp.domain.models.UserProfile
 import com.example.datingapp.domain.repositories.UserRepository
@@ -35,6 +32,10 @@ class UserRepositoryImpl(
         val userEmailAndPasswordData = mapToDatabase(userEmailAndPassword)
 
         userAuth.signUp(userEmailAndPasswordData, signUpCallback)
+    }
+
+    override fun resetPassword(email: String, resetPasswordCallback: ResetPasswordCallback) {
+        userAuth.resetPassword(email, resetPasswordCallback)
     }
 
     private fun mapToDatabase(userEmailAndPassword: UserEmailAndPassword) =

@@ -11,10 +11,10 @@ class FirebaseUserDatabase(private val database: DatabaseReference) : UserDataba
     override fun save(userProfileData: UserProfileData, saveUserCallback: SaveUserCallback) {
         saveUserCallback.onStartSaveUser()
         database.child("users").child(userProfileData.userId!!)
-            .setValue(userProfileData).addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    saveUserCallback.onSuccessSaveUser()
-                } else saveUserCallback.onFailureSaveUser(task.exception)
+            .setValue(userProfileData).addOnSuccessListener {
+                saveUserCallback.onSuccessSaveUser()
+            }.addOnFailureListener { exception ->
+                saveUserCallback.onFailureSaveUser(exception)
             }
     }
 

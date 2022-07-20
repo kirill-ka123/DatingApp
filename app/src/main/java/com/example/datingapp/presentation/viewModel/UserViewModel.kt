@@ -3,20 +3,14 @@ package com.example.datingapp.presentation.viewModel
 import android.app.Application
 import android.util.Log
 import android.util.Patterns
-import android.view.View
+import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.datingapp.domain.callbacks.*
 import com.example.datingapp.domain.models.UserProfile
-import com.example.datingapp.domain.callbacks.GetUserCallback
-import com.example.datingapp.domain.callbacks.SaveUserCallback
-import com.example.datingapp.domain.callbacks.SignInCallback
-import com.example.datingapp.domain.callbacks.SignUpCallback
 import com.example.datingapp.domain.models.UserEmailAndPassword
-import com.example.datingapp.domain.useCases.GetUserFromDbUseCase
-import com.example.datingapp.domain.useCases.SignInUseCase
-import com.example.datingapp.domain.useCases.SignUpUseCase
-import com.example.datingapp.domain.useCases.SaveUserInDbUseCase
+import com.example.datingapp.domain.useCases.*
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
@@ -24,11 +18,12 @@ import com.google.firebase.auth.FirebaseUser
 import java.lang.Exception
 
 class UserViewModel(
-    app: Application,
+    val app: Application,
     private val getUserFromDbUseCase: GetUserFromDbUseCase,
     private val saveUserInDbUseCase: SaveUserInDbUseCase,
     private val signInUseCase: SignInUseCase,
     private val signUpUseCase: SignUpUseCase,
+    private val resetPasswordUseCase: ResetPasswordUseCase
 ) : AndroidViewModel(app) {
 
     private var user: FirebaseUser? = null
@@ -36,7 +31,12 @@ class UserViewModel(
     private val _loginUi = MutableLiveData<LoginUi>()
     val loginUi: LiveData<LoginUi> = _loginUi
 
-    private val auth = FirebaseAuth.getInstance()
+    private val _resetPasswordUi = MutableLiveData<ResetPasswordUi>()
+    val resetPasswordUi: LiveData<ResetPasswordUi> = _resetPasswordUi
+
+    private val auth = FirebaseAuth.getInstance().apply {
+        setLanguageCode("ru")
+    }
 
     init {
         setUser()
@@ -61,15 +61,17 @@ class UserViewModel(
     }
 
     fun signIn(email: String, password: String) {
-
         val userEmailAndPassword = UserEmailAndPassword(email, password)
         signInUseCase(userEmailAndPassword, provideSignInCallback())
     }
 
     fun signUp(email: String, password: String, name: String) {
-
         val userEmailAndPassword = UserEmailAndPassword(email, password)
         signUpUseCase(userEmailAndPassword, provideSignUpCallback(email, name))
+    }
+
+    fun resetPassword(email: String) {
+        resetPasswordUseCase.invoke(email, provideResetPasswordCallback())
     }
 
     /**
@@ -81,7 +83,7 @@ class UserViewModel(
             etName.requestFocus()
             return false
         } else {
-            ltName.isErrorEnabled = false
+            ltName.error = ""
         }
         return true
     }
@@ -100,7 +102,7 @@ class UserViewModel(
             etEmail.requestFocus()
             return false
         } else {
-            ltEmail.isErrorEnabled = false
+            ltEmail.error = ""
         }
         return true
     }
@@ -109,8 +111,6 @@ class UserViewModel(
      * 1) field must not be empty
      * 2) password length must not be less than 6
      * 3) password must contain at least one digit
-     * 4) password must contain at least one upper and one lower case letter
-     * 5) password must contain at least one special character.
      */
     fun validatePassword(etPassword: TextInputEditText, ltPassword: TextInputLayout): Boolean {
         if (etPassword.text.toString().trim().isEmpty()) {
@@ -125,13 +125,13 @@ class UserViewModel(
             ltPassword.error = "Пароль должен содержать хотя бы одну цифру"
            etPassword.requestFocus()
             return false
-        } else if (!isStringLowerAndUpperCase(etPassword.text.toString())) {
-            ltPassword.error =
-                "Пароль должен содержать прописные и строчные буквы"
-           etPassword.requestFocus()
-            return false
+//        } else if (!isStringLowerAndUpperCase(etPassword.text.toString())) {
+//            ltPassword.error =
+//                "Пароль должен содержать прописные и строчные буквы"
+//           etPassword.requestFocus()
+//            return false
         } else {
-            ltPassword.isErrorEnabled = false
+            ltPassword.error = ""
         }
         return true
     }
@@ -145,7 +145,7 @@ class UserViewModel(
             etPassword.requestFocus()
             return false
         } else {
-            ltPassword.isErrorEnabled = false
+            ltPassword.error = ""
         }
         return true
     }
@@ -167,7 +167,7 @@ class UserViewModel(
                 return false
             }
             else -> {
-                ltConfirmPassword.isErrorEnabled = false
+                ltConfirmPassword.error = ""
             }
         }
         return true
@@ -177,7 +177,7 @@ class UserViewModel(
 
     private fun isStringContainNumber(str: String) = str.contains(".*\\d.*".toRegex())
 
-    private fun isStringLowerAndUpperCase(str: String) = str.contains("[a-z]".toRegex()) && str.contains("[A-Z]".toRegex())
+    //private fun isStringLowerAndUpperCase(str: String) = str.contains("[a-z]".toRegex()) && str.contains("[A-Z]".toRegex())
 
     private fun provideSignInCallback() = object : SignInCallback {
         override fun onStartSignIn() {
@@ -199,10 +199,11 @@ class UserViewModel(
             }
         }
 
-        override fun onFailureSignIn(error: Exception?) {
+        override fun onFailureSignIn(error: Exception) {
             Log.w("firebase authentication", "signInWithEmail:failure", error)
+            Toast.makeText(app.applicationContext, "Неправильная почта или пароль", Toast.LENGTH_SHORT).show()
 
-            _loginUi.value = LoginUi.ErrorLoginUi(error?.message)
+            _loginUi.value = LoginUi.ErrorLoginUi(error.message)
         }
     }
 
@@ -226,10 +227,10 @@ class UserViewModel(
             }
         }
 
-        override fun onFailureSignUp(error: Exception?) {
+        override fun onFailureSignUp(error: Exception) {
             Log.w("firebase authentication", "createUserWithEmail:failure", error)
 
-            _loginUi.value = LoginUi.ErrorLoginUi(error?.message)
+            _loginUi.value = LoginUi.ErrorLoginUi(error.message)
         }
     }
 
@@ -269,26 +270,32 @@ class UserViewModel(
             _loginUi.value = LoginUi.SuccessLoginUi(userProfile)
         }
 
-        override fun onFailureSaveUser(error: Exception?) {
+        override fun onFailureSaveUser(error: Exception) {
             Log.w("firebase database", "saveUserInDatabase:failure", error)
 
-            _loginUi.value = LoginUi.ErrorLoginUi(error?.message)
+            _loginUi.value = LoginUi.ErrorLoginUi(error.message)
         }
     }
-}
 
-interface ValidateSignUp {
+    private fun provideResetPasswordCallback() = object : ResetPasswordCallback {
+        override fun onStartResetPassword() {
+            Log.i("firebase authentication", "sendPasswordResetEmail:start")
 
-    fun apply(
-        view: View
-    )
-
-    class ValidateName(): ValidateSignUp {
-        override fun apply(
-            view: View
-        ) {
-
+            _resetPasswordUi.value = ResetPasswordUi.LoadingResetPasswordUi()
         }
 
+        override fun onSuccessResetPassword() {
+            Log.d("firebase authentication", "sendPasswordResetEmail:success")
+            Toast.makeText(app.applicationContext, "Письмо отправлено на вашу электронную почту", Toast.LENGTH_LONG).show()
+
+            _resetPasswordUi.value = ResetPasswordUi.SuccessResetPasswordUi()
+        }
+
+        override fun onFailureResetPassword(error: Exception) {
+            Log.w("firebase authentication", "sendPasswordResetEmail:failure", error)
+            Toast.makeText(app.applicationContext, "Указанный адрес электронной почты не найден", Toast.LENGTH_LONG).show()
+
+            _resetPasswordUi.value = ResetPasswordUi.ErrorResetPasswordUi()
+        }
     }
 }

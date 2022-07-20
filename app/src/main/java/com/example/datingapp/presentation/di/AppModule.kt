@@ -11,7 +11,8 @@ val appModule = module {
             getUserFromDbUseCase = get(),
             saveUserInDbUseCase = get(),
             signInUseCase = get(),
-            signUpUseCase = get()
+            signUpUseCase = get(),
+            resetPasswordUseCase = get()
         )
     }
 }

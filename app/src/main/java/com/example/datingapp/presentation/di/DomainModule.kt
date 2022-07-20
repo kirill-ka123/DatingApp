@@ -1,9 +1,6 @@
 package com.example.datingapp.presentation.di
 
-import com.example.datingapp.domain.useCases.GetUserFromDbUseCase
-import com.example.datingapp.domain.useCases.SaveUserInDbUseCase
-import com.example.datingapp.domain.useCases.SignInUseCase
-import com.example.datingapp.domain.useCases.SignUpUseCase
+import com.example.datingapp.domain.useCases.*
 import org.koin.dsl.module
 
 val domainModule = module {
@@ -18,5 +15,8 @@ val domainModule = module {
     }
     factory {
         SignUpUseCase(userRepository = get())
+    }
+    factory {
+        ResetPasswordUseCase(userRepository = get())
     }
 }
